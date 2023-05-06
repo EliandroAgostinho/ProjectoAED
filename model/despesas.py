@@ -1,10 +1,11 @@
 from pandas import*
 from numpy import*
+from datetime import datetime
 
 class Despesas:
 
     def __init__(self,data: str,categoria: str,valor: float,descDespesa: str):
-        self.__data:str = data
+        self.__data = datetime.strptime(data,"%d/%m/%Y")
         self.__categoria:str = categoria
         self.__valor:float = valor
         self.__descricaoDespesa:str = descDespesa

@@ -14,4 +14,4 @@ class View:
         self.label.pack()
 
         self.text_entry=tk.Entry(self.frame)        
-        self.text_entry.pack
+        self.text_entry.pack()

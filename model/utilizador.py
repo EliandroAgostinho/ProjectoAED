@@ -8,15 +8,21 @@ from datetime import datetime
 class Utilizador:
     
 
-    def __init__(self,nome: str,nif: int,password: str):
+    def __init__(self,nome: str,nif: int,password: str,orcamento: float):
         self.__nome:str = nome
         self.__nif:int = nif
         self.__password:str = password
         self.__despesas: list[Despesas] = [] # Lista normal
-        self.__listaDespesas=listaLigada() # Lista ligada
+        self.__listaDespesas = listaLigada() # Lista ligada
+        self.__orcamento: float = orcamento # Definição do orçamento
 
 #################################################################################################################################
 # Metodos getters e setters
+    def set_orcamento(self,orcamento):
+        self.__orcamento = orcamento
+
+    def get_orcamento(self):
+        return self.__orcamento    
 
     def set_nome(self,nome):
         self.__nome=nome
@@ -46,13 +52,39 @@ class Utilizador:
 
 ##########################################################################################################################
 # Adicionando uma despesa a lista de despesas
-     
+    
     def adicionar_despesa(self,data: str,categoria: str,valor: float,descDespesa: str):
-                AddDespesa = Despesas(data,categoria,valor,descDespesa)
-                self.__listaDespesas.insert_last(AddDespesa)
-                self.__despesas.append(AddDespesa)# Apagar
-        
-
+                no_actual=self.__listaDespesas.head
+                valor_total: float = 0.0
+                data_inserida = datetime.strptime(data,"%d/%m/%Y")
+                n: int=0
+                while no_actual is not None:            
+                    if data_inserida.strftime("%m/%Y") in no_actual.element.get_data():
+                        valor_total += no_actual.element.get_valor() #Acumula o valor dos gastos de um determinado mês que esteja na lista  
+                        
+                        if valor_total >= self.__orcamento*0.8 and valor_total < self.__orcamento:
+                           n=0 
+                        elif valor_total == self.__orcamento:
+                           n+=1   
+                    no_actual=no_actual.next_node
+                #--------------------------------------------------------------------  
+                if self.__orcamento >= valor_total: #Verifica se os gastos de um determinado mês superam o orçamento    
+                   AddDespesa = Despesas(data_inserida,categoria,valor,descDespesa)
+                   self.__listaDespesas.insert_last(AddDespesa)
+                   
+                elif n==0:
+                   AddDespesa = Despesas(data_inserida,categoria,valor,descDespesa)
+                   self.__listaDespesas.insert_last(AddDespesa)
+                   print('Alerta: O valor total das despesas está aproximar-se do orçamento')
+                
+                elif n>0:
+                   AddDespesa = Despesas(data_inserida,categoria,valor,descDespesa)
+                   self.__listaDespesas.insert_last(AddDespesa)
+                   print('Alerta: Já atingiste o limite do orçamento') 
+                
+                else:
+                    print('O valor(Eur) execede o limite do orcamento')   
+    
 #############################################################################################################################
 #  consulta das despesas com tabela ou gráficos "Lista normal" 
 # Tem dicionários
@@ -159,6 +191,13 @@ class Utilizador:
             no_actual=no_actual.next_node
         
         return categorias
+    
+    def analisa_historico_despesas(self):
+        no_actual=self.__listaDespesas.head
+
+        while no_actual is not None:
+
+            no_actual = no_actual.next_node
 
 #########################################################################################################################
  #   Ordenação da linkedlist 
@@ -176,7 +215,7 @@ class Utilizador:
 
         no_actual=self.__listaDespesas.head
         while no_actual is not None:
-            if data_inicio <= no_actual.element.get_data() <= data_fim:
+            if data_inicio <= no_actual.element.get_data() or no_actual.element.get_data() <= data_fim:
                 listaDespesas_filtrada.insert_last(no_actual.element)
 
             no_actual = no_actual.next_node 

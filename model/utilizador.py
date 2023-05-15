@@ -4,22 +4,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 from listaLigada import*
 from datetime import datetime
+from tkinter import messagebox
 
 class Utilizador:
     
-
-    def __init__(self,nome: str,nif: int,password: str,orcamento: float):
+    def __init__(self,nome: str,nif: int,password: str):
         self.__nome:str = nome
         self.__nif:int = nif
-        self.__password:str = password
-        self.__despesas: list[Despesas] = [] # Lista normal
+        self.__password:str = password        
         self.__listaDespesas = listaLigada() # Lista ligada
-        self.__orcamento: float = orcamento # Definição do orçamento
+        self.__orcamento: float = None 
 
 #################################################################################################################################
 # Metodos getters e setters
     def set_orcamento(self,orcamento):
-        self.__orcamento = orcamento
+        self.__orcamento = orcamento # Definição do orçamento
 
     def get_orcamento(self):
         return self.__orcamento    
@@ -41,13 +40,6 @@ class Utilizador:
   
     def get_password(self):
         return self.__password
-
-    def set_despesas(self,despesas):
-        self.__despesas.clear()
-        self.__despesas=despesas
-
-    def get_despesas(self):
-        return self.__despesas    
 
 
 ##########################################################################################################################
@@ -71,29 +63,35 @@ class Utilizador:
                 if self.__orcamento >= valor_total: #Verifica se os gastos de um determinado mês superam o orçamento    
                    AddDespesa = Despesas(data_inserida,categoria,valor,descDespesa)
                    self.__listaDespesas.insert_last(AddDespesa)
+                   #print('Despesa adicionada')
+                   messagebox.showinfo('Despesa','Despesa adicionada com sucesso')
                    
                 elif n==0:
                    AddDespesa = Despesas(data_inserida,categoria,valor,descDespesa)
                    self.__listaDespesas.insert_last(AddDespesa)
-                   print('Alerta: O valor total das despesas está aproximar-se do orçamento')
+                  # print('Despesa adicionada')
+                   messagebox.showinfo('Despesa','Despesa adicionada com sucesso')
+                   messagebox.showwarning('Alerta','O valor total das despesas está aproximar-se do orçamento')
+                   #print('Alerta: O valor total das despesas está aproximar-se do orçamento')
                 
                 elif n>0:
                    AddDespesa = Despesas(data_inserida,categoria,valor,descDespesa)
                    self.__listaDespesas.insert_last(AddDespesa)
-                   print('Alerta: Já atingiste o limite do orçamento') 
+                  # print('Despesa adicionada') 
+                   #print('Alerta: Já atingiste o limite do orçamento') 
+                   messagebox.showinfo('Despesa','Despesa adicionada')
+                   messagebox.showwarning('Alerta','Já atingiste o limite do orçamento')
+                
+                elif self.__orcamento is None:
+                   # print('Alerta: Não foi definido um orçamento')   
+                    messagebox.showwarning('Alerta','Não foi definido um orçamento')
                 
                 else:
-                    print('O valor(Eur) execede o limite do orcamento')   
+                   # print('O valor(Eur) execede o limite do orcamento')   
+                    messagebox.showerror('Atenção','O valor(Eur) excede o limite do orçamento, não pode ser adcicionada mais despesas')
     
 #############################################################################################################################
-#  consulta das despesas com tabela ou gráficos "Lista normal" 
-# Tem dicionários
-
-    def consulta_despesas_tabela(self):   # Retorna a tabela com os dados das despesas 
-        tabela_dispesas = [{'Categoria':dp.get_categoria(),'Descrição da despesa':dp.get_descricaoDespesa(),'Valor(Eur)':dp.get_valor(),'Data':dp.get_data()} for dp in self.__despesas]
-        #pd.DataFrame([dp.__dict__ for dp in self.__despesas])
-        return pd.DataFrame(tabela_dispesas)
-
+    
 # Consulta das despesas com tabela para lista ligada
 # O objectivo é usar TDA'S dicionarios
 
@@ -116,35 +114,16 @@ class Utilizador:
 
         return pd.DataFrame(tabela)       
 ####################################################################################################################################
-# Consulta na lista normal
-# Não tem dicionários
 
-    def consulta_despesas_grafico(self):
-        fig , ax =plt.subplots()
-        valores_np=np.array([dps.__valor for dps in self.__despesas])
-        ax.bar(self.__despesas[0].__categoria,valores_np[0])
-        
-        for i in range(1,len(self.__despesas)):
-            ax.bar(self.__despesas[i].__categoria,valores_np[i],bottom=valores_np[:i].sum(axis=0))
-        
-        ax.set_title('Gráfico de barras empilhadas')
-        ax.set_xlabel('Categorias')
-        ax.set_ylabel('Valores')  
-        fig.show() 
-        #plt.show() 
-        # Tanto o comando fig.show() como plt.show() mostram servem para mostrar a figura 
-        #fig.show() mostra uma figura especifica
-        #plt.show() mostra a figura criada mais recentemente
-        #Como só criamos uma figura a cada chamamento do metodo, então qualquer um dos 2 comandos serve para mostrar a figura
-
+   
 # Consulta na lista ligada         
     def consulta_listaDespesas_grafico(self):
-        fig , ax =plt.subplots()
-        no_actual=self.__listaDespesas.head
-        lista_aux=[]
+        fig , ax = plt.subplots()
+        no_actual = self.__listaDespesas.head
+        lista_aux = listaLigada()
 
         while no_actual is not None:
-            lista_aux.append(no_actual.element.get_valor())
+            lista_aux.insert_last(no_actual.element.get_valor())
             no_actual=no_actual.next_node
         
         valores_np = np.array(lista_aux)
@@ -156,7 +135,7 @@ class Utilizador:
             if i>0:
               ax.bar(no_actual.element.get_categoria(),valores_np[i],bottom=valores_np[:i].sum(axis=0))
             no_actual = no_actual.next_node 
-            i=i+1
+            i += 1
 
         ax.set_title('Gráfico de barras empilhadas')
         ax.set_xlabel('Categorias')
@@ -165,24 +144,15 @@ class Utilizador:
 
 
 #############################################################################################################################
-#Filtração de dados por categoria da lista normal
-#Tem dicionarios
-
-    def filtrar_despesas(self):
-        categorias={}
-        for despesa in self.__despesas:
-            if despesa.get_categoria() in categorias:
-                categorias[despesa.get_categoria()]+=despesa.get_valor()
-            else:
-                categorias[despesa.get_categoria()]=despesa.get_valor()
-        return categorias            
 
 # Filtrar dados por categoria da lista ligada
 
  
     def filtrar_listaDespesa(self):
         categorias=dict()
-        no_actual=self.__listaDespesas.head
+        no_actual = self.__listaDespesas.head
+        lista_categorias = listaLigada()
+
         while no_actual is not None:
             if no_actual.element.get_categoria() in categorias:
                 categorias[no_actual.element.get_categoria()]+=no_actual.element.get_valor()
@@ -190,15 +160,67 @@ class Utilizador:
                 categorias[no_actual.element.get_categoria()]=no_actual.element.get_valor()    
             no_actual=no_actual.next_node
         
-        return categorias
+        for catg,valor in categorias.items():
+            despesa = Despesas(None,catg,valor,None)
+            lista_categorias.insert_last(despesa)
+        
+        lista_categorias.head = lista_categorias.mergesort()
+        return lista_categorias     
+
+#########################################################################################################################
+ # Analisa histórico de despesas
     
     def analisa_historico_despesas(self):
-        no_actual=self.__listaDespesas.head
+        no_actual = self.__listaDespesas.head
+        soma_valores = {}
+        contador_valores_categoria = {}
 
         while no_actual is not None:
+            
+            if no_actual.element.get_categoria() not in soma_valores:
+                soma_valores[no_actual.element.get_categoria()] = 0
+                contador_valores_categoria[no_actual.element.get_categoria()] = 0 
+                
+            soma_valores[no_actual.element.get_categoria()] += no_actual.element.get_valor()
+            contador_valores_categoria[no_actual.element.get_categoria()] += 1
 
             no_actual = no_actual.next_node
+        media_por_categoria = {}
+        
+        for categoria in soma_valores:
+            media_por_categoria[categoria] = soma_valores.get(categoria)/contador_valores_categoria.get(categoria) 
 
+        listaDespeas_media = listaLigada()
+
+        for catg, media in soma_valores.items():
+            despesa = Despesas(None,catg,media,None)
+            listaDespeas_media.insert_last(despesa)
+
+        listaDespeas_media.head = listaDespeas_media.mergesort() 
+        tamanho_lista = listaDespeas_media.size()
+
+        if tamanho_lista == 1 or tamanho_lista == 2:
+            
+            return listaDespeas_media.get_last()# Retorna o último elemento da lista de cdespesas com médias 
+
+        elif tamanho_lista > 2 :
+            lista_maiores_gastos = listaLigada()
+            no_corrente = listaDespeas_media.head
+            maior_na_lista = listaDespeas_media.get_last()
+
+            while no_actual is not None:#Busca os elementos da lista que têm uma percentagem maior ou igual à 50% que a do último vaor da lista com as médias já ordenas
+                
+                if no_corrente.element.get_valor() >=  maior_na_lista.get_valor()*0.5:
+                
+                    lista_maiores_gastos.insert_last(no_corrente.element) 
+                
+                no_corrente = no_corrente.next_node
+
+            return lista_maiores_gastos    
+
+           # ATT: A função retorna ou uma lista ligada ou uma única despesa 
+
+       
 #########################################################################################################################
  #   Ordenação da linkedlist 
     def Ordena_listaDespesas(self):

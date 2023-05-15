@@ -10,8 +10,14 @@ class View:
         self.frame=tk.Frame(self.master)
         self.frame.pack()
 
-        self.label = tk.Label(self.frame, text="Bem-vindo a AED")
+        self.label = tk.Label(self.frame, text="Bem-vindo")
         self.label.pack()
 
         self.text_entry=tk.Entry(self.frame)        
         self.text_entry.pack()
+
+    def registrar_utlizador(self):
+        pass 
+
+    def registrar_despesa(self):
+        pass   

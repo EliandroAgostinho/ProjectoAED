@@ -5,7 +5,13 @@ from datetime import datetime
 class Despesas:
 
     def __init__(self,data: str,categoria: str,valor: float,descDespesa: str):
-        self.__data = datetime.strptime(data,"%d/%m/%Y")
+        
+        if isinstance(data, datetime):
+            self.__data = data.strftime("%d/%m/%Y")
+        elif data == '00/00/0000' or data =='':
+            self.__data = None    
+        else:
+            self.__data = datetime.strptime(data, "%d/%m/%Y")
         self.__categoria:str = categoria
         self.__valor:float = valor
         self.__descricaoDespesa:str = descDespesa

@@ -1,8 +1,8 @@
-from despesas import*
+from model.despesas import*
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from listaLigada import*
+from model.listaLigada import*
 from datetime import datetime
 from tkinter import messagebox
 
@@ -13,7 +13,7 @@ class Utilizador:
         self.__nif:int = nif
         self.__password:str = password        
         self.__listaDespesas = listaLigada() # Lista ligada
-        self.__orcamento: float = None 
+        self.__orcamento: float = 0.0 
 
 #################################################################################################################################
 # Metodos getters e setters
@@ -40,54 +40,59 @@ class Utilizador:
   
     def get_password(self):
         return self.__password
+    
+    def get_listaDespesas(self):
+        return self.__listaDespesas
 
 
 ##########################################################################################################################
 # Adicionando uma despesa a lista de despesas
     
     def adicionar_despesa(self,data: str,categoria: str,valor: float,descDespesa: str):
-                no_actual=self.__listaDespesas.head
-                valor_total: float = 0.0
-                data_inserida = datetime.strptime(data,"%d/%m/%Y")
+            no_actual = self.__listaDespesas.head
+            valor_total: float = 0.0
+            if self.__orcamento <= 0.0: 
+                    messagebox.showwarning('Alerta','Não foi definido um orçamento')
+            else:
+                
+                if isinstance(data, datetime):
+                   data_inserida = data.strftime("%d/%m/%Y")
+                
+                else:
+                   data_inserida = datetime.strptime(data, "%d/%m/%Y")
+                
                 n: int=0
+                
                 while no_actual is not None:            
                     if data_inserida.strftime("%m/%Y") in no_actual.element.get_data():
                         valor_total += no_actual.element.get_valor() #Acumula o valor dos gastos de um determinado mês que esteja na lista  
                         
                         if valor_total >= self.__orcamento*0.8 and valor_total < self.__orcamento:
                            n=0 
+
                         elif valor_total == self.__orcamento:
-                           n+=1   
+                           n+=1
+
                     no_actual=no_actual.next_node
                 #--------------------------------------------------------------------  
                 if self.__orcamento >= valor_total: #Verifica se os gastos de um determinado mês superam o orçamento    
                    AddDespesa = Despesas(data_inserida,categoria,valor,descDespesa)
                    self.__listaDespesas.insert_last(AddDespesa)
-                   #print('Despesa adicionada')
                    messagebox.showinfo('Despesa','Despesa adicionada com sucesso')
                    
                 elif n==0:
                    AddDespesa = Despesas(data_inserida,categoria,valor,descDespesa)
                    self.__listaDespesas.insert_last(AddDespesa)
-                  # print('Despesa adicionada')
                    messagebox.showinfo('Despesa','Despesa adicionada com sucesso')
                    messagebox.showwarning('Alerta','O valor total das despesas está aproximar-se do orçamento')
-                   #print('Alerta: O valor total das despesas está aproximar-se do orçamento')
                 
                 elif n>0:
                    AddDespesa = Despesas(data_inserida,categoria,valor,descDespesa)
                    self.__listaDespesas.insert_last(AddDespesa)
-                  # print('Despesa adicionada') 
-                   #print('Alerta: Já atingiste o limite do orçamento') 
                    messagebox.showinfo('Despesa','Despesa adicionada')
                    messagebox.showwarning('Alerta','Já atingiste o limite do orçamento')
                 
-                elif self.__orcamento is None:
-                   # print('Alerta: Não foi definido um orçamento')   
-                    messagebox.showwarning('Alerta','Não foi definido um orçamento')
-                
                 else:
-                   # print('O valor(Eur) execede o limite do orcamento')   
                     messagebox.showerror('Atenção','O valor(Eur) excede o limite do orçamento, não pode ser adcicionada mais despesas')
     
 #############################################################################################################################
@@ -96,19 +101,18 @@ class Utilizador:
 # O objectivo é usar TDA'S dicionarios
 
     def consulta_listaDespesa_tabela(self):
-        tabela=listaLigada()
-        dicionario=dict() 
-
+        tabela = []
+        
         no_actual=self.__listaDespesas.head
         
         while no_actual is not None:
-            
-            dicionario['categoria'] = no_actual.element.get_categoria()
-            dicionario['Descrição da despesa'] = no_actual.element.get_descricaoDespesa()
-            dicionario['Valor(Eur)'] = no_actual.element.get_valor()
-            dicionario['Data'] = no_actual.element.get_data()
-            
-            tabela.insert_last(dicionario)   
+            dicionario = {}
+            dicionario[' categoria'] = no_actual.element.get_categoria()
+            dicionario[' Descrição da despesa'] = no_actual.element.get_descricaoDespesa()
+            dicionario[' Valor(Eur)'] = no_actual.element.get_valor()
+            dicionario[' Data'] = no_actual.element.get_data()
+            tabela.append(dicionario)
+              
             
             no_actual=no_actual.next_node  
 
@@ -120,27 +124,33 @@ class Utilizador:
     def consulta_listaDespesas_grafico(self):
         fig , ax = plt.subplots()
         no_actual = self.__listaDespesas.head
-        lista_aux = listaLigada()
+        lista_aux = []
 
-        while no_actual is not None:
-            lista_aux.insert_last(no_actual.element.get_valor())
-            no_actual=no_actual.next_node
+        if no_actual is None:
+            messagebox.showwarning('Alerta','Lista vazia')
+        else:    
+
+            while no_actual is not None:
+               lista_aux.append(no_actual.element.get_valor())
+               no_actual = no_actual.next_node
+            
         
-        valores_np = np.array(lista_aux)
-        ax.bar(self.__listaDespesas.get_first(),valores_np[0])
+            valores_np = np.array(lista_aux)
+            ax.bar(self.__listaDespesas.get_first().get_categoria(),valores_np[0])
 
-        no_actual = self.__listaDespesas.head #Recebe o 2º nó da lista
-        i = 0
-        while no_actual is not None:    # Percorre a lista ligada apartir do 2º nó, assim como no metodo "consulta_despesas_grafico(self)" acima
-            if i>0:
-              ax.bar(no_actual.element.get_categoria(),valores_np[i],bottom=valores_np[:i].sum(axis=0))
-            no_actual = no_actual.next_node 
-            i += 1
+            no_actual = self.__listaDespesas.head 
+            i = 0
+            while no_actual is not None:    # Percorre a lista ligada apartir do 2º nó, assim como no metodo "consulta_despesas_grafico(self)" acima
+                if i>0:
+                  ax.bar(no_actual.element.get_categoria(),valores_np[i],bottom=valores_np[:i].sum(axis=0))
+                no_actual = no_actual.next_node 
+                i += 1
 
-        ax.set_title('Gráfico de barras empilhadas')
-        ax.set_xlabel('Categorias')
-        ax.set_ylabel('Valores')  
-        fig.show()    
+            ax.set_title('Gráfico de barras empilhadas')
+            ax.set_xlabel('Categorias')
+            ax.set_ylabel('Valores')  
+            #fig.show()
+            return fig    
 
 
 #############################################################################################################################
@@ -149,7 +159,7 @@ class Utilizador:
 
  
     def filtrar_listaDespesa(self):
-        categorias=dict()
+        categorias = dict()
         no_actual = self.__listaDespesas.head
         lista_categorias = listaLigada()
 
@@ -161,7 +171,7 @@ class Utilizador:
             no_actual=no_actual.next_node
         
         for catg,valor in categorias.items():
-            despesa = Despesas(None,catg,valor,None)
+            despesa = Despesas('00/00/0000',catg,valor,'')
             lista_categorias.insert_last(despesa)
         
         lista_categorias.head = lista_categorias.mergesort()
@@ -193,11 +203,12 @@ class Utilizador:
         listaDespeas_media = listaLigada()
 
         for catg, media in soma_valores.items():
-            despesa = Despesas(None,catg,media,None)
+            despesa = Despesas('00/00/0000',catg,media,'')
             listaDespeas_media.insert_last(despesa)
 
         listaDespeas_media.head = listaDespeas_media.mergesort() 
-        tamanho_lista = listaDespeas_media.size()
+        
+        tamanho_lista = listaDespeas_media.size
 
         if tamanho_lista == 1 or tamanho_lista == 2:
             
@@ -237,8 +248,15 @@ class Utilizador:
 
         no_actual=self.__listaDespesas.head
         while no_actual is not None:
-            if data_inicio <= no_actual.element.get_data() or no_actual.element.get_data() <= data_fim:
-                listaDespesas_filtrada.insert_last(no_actual.element)
-
+            
+            if isinstance(no_actual.element.get_data(),datetime):
+               if data_inicio <= no_actual.element.get_data() and no_actual.element.get_data() <= data_fim:
+                  listaDespesas_filtrada.insert_last(no_actual.element)
+            
+            else:
+                data_no_atual = datetime.strptime(no_actual.element.get_data(),"%d/%m/%Y") 
+                if data_inicio <= data_no_atual and data_no_atual <= data_fim:
+                  listaDespesas_filtrada.insert_last(no_actual.element)     
             no_actual = no_actual.next_node 
+        
         return listaDespesas_filtrada        

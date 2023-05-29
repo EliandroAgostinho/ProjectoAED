@@ -1,5 +1,5 @@
-from List.List import*
-from List.Nodes import*
+from model.List.List import*
+from model.List.Nodes import*
 
 class listaLigada(List):
     def __init__(self):
@@ -28,11 +28,12 @@ class listaLigada(List):
 
     def get(self, posicao):
         if posicao < 0 or posicao >= self.size:
-            raise Exception("Posição inválida")
+            #raise Exception("Posição inválida")
+            return None
         node = self.head
         for i in range(posicao):
-            node = node.get_next_node()
-        return node.get_element()
+            node = node.next_node
+        return node.element
 
     def find(self, elemento):
         node = self.head
@@ -44,6 +45,17 @@ class listaLigada(List):
             posicao += 1
         return -1
     
+    def find_username(self, username):
+        node = self.head
+        posicao = 0
+        while node is not None:
+            if node.element.get_nome() == username:
+                return posicao
+            node = node.next_node
+            posicao += 1
+        return -1
+    
+
     def insert(self, elemento, posicao):
         if posicao < 0 or posicao > self.size:
             raise Exception("Posição inválida")

@@ -2,7 +2,7 @@
 
 #from model.utilizador import*
 #from model.despesas import*
-from view import *
+from view import*
 
 
 class Controller:

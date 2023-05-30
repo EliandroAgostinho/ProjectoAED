@@ -16,7 +16,14 @@ class View:
         self.master=master
         self.lista_utilizador = listaLigada()
         self.carrega_lista_utilizador = ManipulaArquivos()
-        self.lista_utilizador = self.carrega_lista_utilizador.ler_ficheiro_json()
+        self.cliente: Utilizador = None
+        
+        if self.lista_utilizador.head is None:
+           self.lista_utilizador = self.carrega_lista_utilizador.ler_ficheiro_json()
+        else:
+            self.lista_utilizador.make_empty()   
+            self.lista_utilizador = self.carrega_lista_utilizador.ler_ficheiro_json()
+        
         
         #Frame
         self.master.resizable(False, False)
@@ -39,6 +46,8 @@ class View:
         self.nome_label.pack()
         self.nome_entry = tk.Entry(self.frame, font=('Arial', 16))
         self.nome_entry.pack(pady=5)
+        
+
 
         #Label + Entry para password
         self.password_label = tk.Label(self.frame, text="Password", font=('Corbel Light', 16), bg='#808080')
@@ -58,11 +67,13 @@ class View:
         
         
 
-
      ################################################################################################
      # O metodo logar deve ser chamado se o utilizador estiver registrado já 
     
     def registrar_utlizador(self):
+
+        
+
         ##############################################################################################
         #Frame para o registro
         self.janela_registro = tk.Toplevel(self.master,padx=200,pady=100,bg='#808080')
@@ -116,6 +127,7 @@ class View:
         
         
     def finalizar_registro_utilizador(self):
+        
         nome_usuario = self.nome_entry2.get()
         nif = self.nif_entry.get()
         senha = self.password_entry2.get()
@@ -167,7 +179,7 @@ class View:
              
              pos=self.lista_utilizador.find_username(nome)
              
-             utilizador=self.lista_utilizador.get(pos)
+             utilizador:Utilizador=self.lista_utilizador.get(pos)
              
              if utilizador is not None and self.password_entry.get()==utilizador.get_password():
                   messagebox.showinfo("Sucesso", "Login realizado com sucesso!")
@@ -188,6 +200,22 @@ class View:
 
                   self.botao_sugerir_cortes = tk.Button(self.janela_label,text="Sugestão de cortes",font=('InK Free', 16), bg='#00BFFF',command = self.sugerir_cortes)
                   self.botao_sugerir_cortes.pack()
+
+                  ##################################################
+                  if self.cliente is None:# Recarregar os dados do utilizador logado no self.cliente para se puder usar nos outros metodos da classe view
+                      
+                      nome_usuario_logado = utilizador.get_nome()
+                      nif_logado = utilizador.get_nif()
+                      senha_logado = utilizador.get_password()
+                      self.cliente = Utilizador(nome_usuario_logado, int(nif_logado),senha_logado)
+                      
+                      orcamento_logado = utilizador.get_orcamento()
+                      lista_despesas_logado: listaLigada = utilizador.get_listaDespesas()
+
+                      self.cliente.set_orcamento(orcamento_logado)
+                      self.cliente.set_listaDespesas(lista_despesas_logado)
+
+                  
 
              else:
                   messagebox.showerror("Erro", "Nome de usuário ou senha incorretos!")
@@ -233,8 +261,9 @@ class View:
         self.adiciona_despesa_registrada = tk.Button(self.tela_registro_despesa,text="Adicionar despesa",font=('InK Free', 12), bg='#00BFFF',command = self.finalizar_registro_despesa)
         self.adiciona_despesa_registrada.pack()
 
-    def finalizar_registro_despesa(self):
 
+    def finalizar_registro_despesa(self):
+        
         data_despesa = self.entry_data.get()
         categoria_despesa =  self.entry_categoria.get()
         valor_despesa = self.entry_valor.get()
@@ -316,11 +345,12 @@ class View:
 
 
     def visualiza_despesas_periodo_tempo(self):
-
+        
         self.despesas_periodo_tempo_janela = tk.Toplevel(self.master,padx=60,pady=60,bg='#808080')
         self.despesas_periodo_tempo_janela.resizable(False,False)
         self.despesas_periodo_tmpo_tela = tk.Label(self.despesas_periodo_tempo_janela) 
-        self.despesas_periodo_tmpo_tela.pack()   
+        self.despesas_periodo_tmpo_tela.pack()
+   
 
         # Label + Entry data inicio
         self.label_data_inicio = tk.Label(self.despesas_periodo_tmpo_tela,text="Insira a data de inicio no formato (DD/MM/AAAA)",font=('Corbel Light', 16))
@@ -340,7 +370,9 @@ class View:
         self.botao_visualizacao_filtragem.pack()
 
 
+
     def finaliza_visualiza_despesas_periodo_tempo(self):
+
         
         self.fa_va_despesas_periodo_tempo_janela = tk.Toplevel(self.master,padx=60,pady=60,bg='#808080') 
         self.fa_va_despesas_periodo_tempo_janela.resizable(False,False)
@@ -375,8 +407,6 @@ class View:
         label_info_despesas = tk.Label(self.fa_va_despesas_p_tmp_tela,text=info_despesas,font=('Arial', 14))
         label_info_despesas.pack()
     
-
-
                 
     def tabela_despesas(self):
         self.tabela_janela = tk.Toplevel(self.master,padx=200,pady=100,bg='#808080')
@@ -409,7 +439,6 @@ class View:
 
     #####################################################################################################################
 
-
     def definir_orcamento(self):
         self.orcamento_tela = tk.Toplevel(self.master,padx=50,pady=50,bg='#808080')
         self.orcamento_tela.resizable(False,False)
@@ -426,11 +455,34 @@ class View:
         self.botao_finaliza_orcamento = tk.Button(self.janela_orcamento,text="Definir orçamento ",font=('InK Free', 16), bg='#00BFFF',command = self.finaliza_definir_orcamento)
         self.botao_finaliza_orcamento.pack()
 
+        
+    
+
     def finaliza_definir_orcamento(self):  
         orcamento = self.orcamento_entry.get()
-        self.cliente.set_orcamento(float(orcamento))
-        self.carrega_lista_utilizador.salvar_dados_em_json(self.lista_utilizador)
-        messagebox.showinfo('Orçamento','Orçamento definido com sucesso')
+
+        if orcamento == '':
+           messagebox.showerror('Erro', 'Preencha o campo do orçamento')
+           return
+
+        try:
+           orcamento = float(orcamento)
+        except ValueError:
+            messagebox.showerror('Erro', 'O valor do orçamento deve ser um número')
+            return
+
+    # Verificar se o cliente está na lista de utilizadores
+        nome_cliente = self.cliente.get_nome()
+        pos = self.lista_utilizador.find_username(nome_cliente)
+        if pos >= 0:
+           #cliente_existente: Utilizador = self.lista_utilizador.get(pos)
+           #cliente_existente.set_orcamento(orcamento)
+           self.cliente.set_orcamento(orcamento)
+           self.carrega_lista_utilizador.salvar_dados_em_json(self.lista_utilizador)
+           self.orcamento_tela.destroy()
+           messagebox.showinfo('Orçamento','Orçamento definido com sucesso')
+        else:
+           messagebox.showerror('Erro','Cliente não encontrado')
 
 
 

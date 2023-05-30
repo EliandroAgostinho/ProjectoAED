@@ -41,6 +41,9 @@ class Utilizador:
     def get_password(self):
         return self.__password
     
+    def set_listaDespesas(self,lista_despesas: listaLigada = None):
+        self.__listaDespesas = lista_despesas
+    
     def get_listaDespesas(self):
         return self.__listaDespesas
 
